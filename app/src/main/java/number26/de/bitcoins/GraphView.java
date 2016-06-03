@@ -57,7 +57,7 @@ public class GraphView extends View implements DataController.DataListener {
         mAxisPaint.setColor(Color.BLACK);
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setColor(Color.GREEN);
+        mTextPaint.setColor(Color.BLUE);
     }
 
     @Override
@@ -234,15 +234,21 @@ public class GraphView extends View implements DataController.DataListener {
 
         step = (maxAxX - minAxX) / 12;
 
-        mTextPaint.setTextSize(Utils.spToDp(getContext(), 12f));
+        mTextPaint.setTextSize(Utils.spToDp(getContext(), 13f));
         float yCoord = canvasHeight
                 - normalize(canvasHeight, mMinY, mMaxY, mMinY);
 
+        int textHeight = 0;
+
         for (int i = 1; i < 12; i++) {
             final String toDrawn = getFormattedXValue((long) (1000L * (minAxX + (step * i))));
-            mTextPaint.getTextBounds(toDrawn, 0, toDrawn.length(), bounds);
+            if (textHeight == 0) {
+                mTextPaint.getTextBounds(toDrawn, 0, toDrawn.length(), bounds);
+                textHeight = bounds.height();
+            }
             float xCoord = left + normalize(canvasWidth, minAxX, maxAxX, minAxX + (step * i));
-            canvas.drawText(toDrawn, xCoord - bounds.width(), yCoord + bounds.height(), mTextPaint);
+            canvas.drawLine(xCoord - bounds.width() / 2, canvasHeight - Utils.pxToDp(getContext(), 5), xCoord - bounds.width() / 2, canvasHeight, mTextPaint);
+            canvas.drawText(toDrawn, xCoord - bounds.width(), yCoord + textHeight, mTextPaint);
         }
     }
 
