@@ -1,5 +1,6 @@
 package number26.de.bitcoins;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -11,11 +12,13 @@ import android.widget.Spinner;
 import java.util.ArrayList;
 import java.util.List;
 
+import number26.de.bitcoins.model.PriceTrend;
 import number26.de.bitcoins.model.TimeSpan;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DataController.DataListener {
 
     private final DataController mDataController = new DataController();
+    private ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         mDataController.addDataListener((DataController.DataListener) findViewById(R.id.graph));
+        mDataController.addDataListener(this);
 
         ArrayAdapter<TimeSpan> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, getTimeSpans());
         Spinner spinner = (Spinner) findViewById(R.id.spinner_nav);
@@ -34,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mProgressDialog = ProgressDialog.show(MainActivity.this, null, null, true);
                 mDataController.updateData((TimeSpan) parent.getItemAtPosition(position));
             }
 
@@ -42,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        mProgressDialog = ProgressDialog.show(this, null, null, true);
         mDataController.updateData(null);
     }
 
@@ -61,6 +67,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-       mDataController.onDestroy();
+        mDataController.onDestroy();
+    }
+
+    @Override
+    public void onDataSetChanged(List<PriceTrend> priceTrend) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                    mProgressDialog.dismiss();
+                }
+            }
+        });
     }
 }
