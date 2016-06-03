@@ -38,7 +38,9 @@ public class MainActivity extends AppCompatActivity implements DataController.Da
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                mProgressDialog = ProgressDialog.show(MainActivity.this, null, null, true);
+                if (mProgressDialog != null && !mProgressDialog.isShowing()) {
+                    mProgressDialog.show();
+                }
                 mDataController.updateData((TimeSpan) parent.getItemAtPosition(position));
             }
 
