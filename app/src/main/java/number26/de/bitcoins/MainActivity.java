@@ -3,29 +3,19 @@ package number26.de.bitcoins;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import number26.de.bitcoins.model.PriceTrend;
 import number26.de.bitcoins.model.TimeSpan;
-import number26.de.bitcoins.net.RestClient;
-import rx.Observer;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Subscription mSubscription;
+    private final DataController mDataController = new DataController();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        mDataController.addDataListener((DataController.DataListener) findViewById(R.id.graph));
 
         ArrayAdapter<TimeSpan> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, getTimeSpans());
         Spinner spinner = (Spinner) findViewById(R.id.spinner_nav);
@@ -43,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                fetchData((TimeSpan) parent.getItemAtPosition(position));
+                mDataController.updateData((TimeSpan) parent.getItemAtPosition(position));
             }
 
             @Override
@@ -51,36 +42,9 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        mDataController.updateData(null);
     }
 
-    private void fetchData(TimeSpan timeSpan) {
-        Map<String, String> query = new HashMap<>();
-        if (timeSpan != null && !TextUtils.isEmpty(timeSpan.getValue())) {
-            query.put("timespan", timeSpan.getValue());
-        }
-        query.put("format", "json");
-        if (mSubscription != null) {
-            mSubscription.unsubscribe();
-        }
-        mSubscription = RestClient.getInstance().fetchBitCoinsPriceTrend(query)
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<List<PriceTrend>>() {
-            @Override
-            public void onCompleted() {
-            }
-
-            @Override
-            public void onError(Throwable e) {
-            }
-
-            @Override
-            public void onNext(List<PriceTrend> priceTrend) {
-                ((GraphView) findViewById(R.id.graph)).addPoints(priceTrend);
-            }
-        });
-        ((GraphView) findViewById(R.id.graph)).clear();
-    }
 
     private List<TimeSpan> getTimeSpans() {
         List<TimeSpan> timeSpan = new ArrayList<>();
@@ -97,8 +61,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mSubscription != null) {
-            mSubscription.unsubscribe();
-        }
+       mDataController.onDestroy();
     }
 }

@@ -1,22 +1,29 @@
 package number26.de.bitcoins.net;
 
+import android.net.Uri;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
+
+import number26.de.bitcoins.Constants;
 
 /**
  * Created by emanuele on 02.06.16.
  */
 public class DataDownloaderCommand implements Runnable {
 
-    private final String mUrl;
+    private final String mPath;
+    private final Map<String, String> mParams;
     private final CommandListener<String> mListener;
 
-    public DataDownloaderCommand(String url, CommandListener<String> listener) {
-        mUrl = url;
+    public DataDownloaderCommand(String path, Map<String, String> params, CommandListener<String> listener) {
+        mPath = path;
+        mParams = params;
         mListener = listener;
     }
 
@@ -24,8 +31,14 @@ public class DataDownloaderCommand implements Runnable {
     public void run() {
         HttpURLConnection urlConnection = null;
         try {
-
-            urlConnection = (HttpURLConnection) new URL(mUrl).openConnection();
+            Uri.Builder builder = Uri.parse(Constants.BIT_COIN_BASE_URL).buildUpon();
+            builder.appendEncodedPath(mPath);
+            if (mParams != null) {
+                for (Map.Entry<String, String> next : mParams.entrySet()) {
+                    builder.appendQueryParameter(next.getKey(), next.getValue());
+                }
+            }
+            urlConnection = (HttpURLConnection) new URL(builder.toString()).openConnection();
             urlConnection.setRequestProperty("Accept", "application/json");
             InputStream in = null;
             if (urlConnection.getResponseCode() == 200) {

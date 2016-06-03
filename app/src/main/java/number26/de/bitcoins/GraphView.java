@@ -15,11 +15,12 @@ import java.util.Calendar;
 import java.util.List;
 
 import number26.de.bitcoins.model.Point;
+import number26.de.bitcoins.model.PriceTrend;
 
 /**
  * Created by emanuele on 02.06.16.
  */
-public class GraphView extends View {
+public class GraphView extends View implements DataController.DataListener {
 
     private static final String LOG_TAG = GraphView.class.getSimpleName();
     private final int mMinWidth;
@@ -52,7 +53,7 @@ public class GraphView extends View {
         mGraphPaint.setStrokeWidth(Utils.pxToDp(context, 2));
 
         mAxisPaint = new Paint(mGraphPaint);
-        mAxisPaint.setStrokeWidth(Utils.pxToDp(context, 0));
+        mAxisPaint.setStrokeWidth(Utils.pxToDp(context, 1));
         mAxisPaint.setColor(Color.BLACK);
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -233,8 +234,6 @@ public class GraphView extends View {
 
         step = (maxAxX - minAxX) / 12;
 
-        List<Pair<String, Float>> xLabels = getXLabels();
-
         mTextPaint.setTextSize(Utils.spToDp(getContext(), 12f));
         float yCoord = canvasHeight
                 - normalize(canvasHeight, mMinY, mMaxY, mMinY);
@@ -267,6 +266,17 @@ public class GraphView extends View {
         mMaxX = mMaxY = Integer.MIN_VALUE;
         mMinX = mMinY = Integer.MAX_VALUE;
         invalidate();
+    }
+
+    @Override
+    public void onDataSetChanged(final List<PriceTrend> priceTrend) {
+        post(new Runnable() {
+            @Override
+            public void run() {
+                clear();
+                addPoints(priceTrend);
+            }
+        });
     }
 }
 

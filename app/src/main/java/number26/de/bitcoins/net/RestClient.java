@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
+import number26.de.bitcoins.Constants;
 import number26.de.bitcoins.model.PriceTrend;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -39,7 +40,7 @@ public class RestClient {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(listType, new PriceTrendDeserializer());
         Retrofit restAdapter = new Retrofit.Builder()
-                .baseUrl("https://blockchain.info/")
+                .baseUrl(Constants.BIT_COIN_BASE_URL)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(gsonBuilder.create()))
                 .build();
