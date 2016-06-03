@@ -51,7 +51,7 @@ public class GraphView extends View {
         mGraphPaint.setStrokeWidth(Utils.pxToDp(context, 2));
 
         mAxisPaint = new Paint(mGraphPaint);
-        mAxisPaint.setStrokeWidth(Utils.pxToDp(context, 2));
+        mAxisPaint.setStrokeWidth(Utils.pxToDp(context, 0));
         mAxisPaint.setColor(Color.BLACK);
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -87,6 +87,7 @@ public class GraphView extends View {
         setMeasuredDimension(width, height);
     }
 
+
     public void addPoint(final Point point) {
         synchronized (mGraphPoints) {
             mGraphPoints.add(point);
@@ -112,16 +113,18 @@ public class GraphView extends View {
         int horizontalMargin = 0;
         int verticalMargin = 0;
 
-        final int canvasWidth = getWidth() - getLeft() - getPaddingLeft() - getPaddingRight() - horizontalMargin - getLeft();
-        final int canvasHeight = getHeight() - getPaddingTop() - getPaddingBottom() - verticalMargin - getTop();
+        int left = getPaddingLeft();
+
+        final int canvasWidth = getPaddedWidth();
+        final int canvasHeight = getPaddedHeight();
 
         for (int i = 0; i < mGraphPoints.size() - 1; i++) {
             Point point = mGraphPoints.get(i);
             Point nextPoint = mGraphPoints.get(i + 1);
-            final float startX = getLeft() + normalize(canvasWidth, mMinX, mMaxX, point.getX());
+            final float startX = left + normalize(canvasWidth, mMinX, mMaxX, point.getX());
             final float startY = normalize(canvasHeight, mMinY, mMaxY, point.getY());
 
-            final float nextX = getLeft() + normalize(canvasWidth, mMinX, mMaxX, nextPoint.getX());
+            final float nextX = left + normalize(canvasWidth, mMinX, mMaxX, nextPoint.getX());
             final float nextY = normalize(canvasHeight, mMinY, mMaxY, nextPoint.getY());
 
             canvas.drawLine(startX, canvasHeight
@@ -129,9 +132,16 @@ public class GraphView extends View {
                     - nextY, mGraphPaint);
         }
 
-        final float axisX = normalize(canvasHeight, mMinX, mMaxX, mMinX);
-        final float axisY = getLeft() + normalize(canvasWidth, mMinY, mMaxY, mMinY);
-        canvas.drawLine(getLeft(), canvasHeight - axisX, getWidth(), canvasHeight - axisX, mAxisPaint);
+
+        int minAxY = (((int) mMinY / 10) - 1) * 10;
+        int maxAxY = (((int) mMaxY / 10) + 1) * 10;
+
+        int minAxX = (((int) mMinX / 10) - 1) * 10;
+        int maxAxX = (((int) mMaxX / 10) + 1) * 10;
+
+        final float axisX = normalize(canvasHeight, minAxX, maxAxX, minAxX);
+        final float axisY = left + normalize(canvasWidth, minAxY, maxAxY, minAxY);
+        canvas.drawLine(left, canvasHeight - axisX, left + canvasWidth, canvasHeight - axisX, mAxisPaint);
         canvas.drawLine(axisY, 0, axisY, canvasHeight, mAxisPaint);
         writeYLabels(canvas);
     }
@@ -173,8 +183,6 @@ public class GraphView extends View {
                 mMaxX = Math.max(mMaxX, point.getX());
             }
         }
-        mMinX = (((int) mMinX / 10) - 1) * 10;
-        mMaxX = (((int) mMaxX / 10) + 1) * 10;
     }
 
 
@@ -185,8 +193,15 @@ public class GraphView extends View {
                 mMaxY = Math.max(mMaxY, point.getY());
             }
         }
-        mMinY = (((int) mMinY / 10) - 1) * 10;
-        mMaxY = (((int) mMaxY / 10) + 1) * 10;
+    }
+
+
+    private int getPaddedWidth() {
+        return getWidth() - getPaddingLeft() - getPaddingRight();
+    }
+
+    private int getPaddedHeight() {
+        return getHeight() - getPaddingTop() - getPaddingBottom();
     }
 
     private void writeYLabels(Canvas canvas) {
@@ -196,22 +211,22 @@ public class GraphView extends View {
 
         int newMinY = ((((int) mMinY / 10) - 1) * 10);
         int newMaxY = ((((int) mMaxY / 10) + 1) * 10);
-        Log.e(LOG_TAG, "newMinY " + newMinY + " newMaxY " + newMaxY);
-        float step = ((mMaxY - mMinY) / 8);
 
-        int horizontalMargin = 0;
-        int verticalMargin = 0;
+        float step = ((newMaxY - newMinY) / 8);
 
-        final int canvasWidth = getWidth() - getLeft() - getPaddingLeft() - getPaddingRight() - horizontalMargin - getLeft();
-        final int canvasHeight = getHeight() - getPaddingTop() - getPaddingBottom() - verticalMargin - getTop();
+        final int canvasWidth = getPaddedWidth();
+        final int canvasHeight = getPaddedHeight();
+
+        final int left = getPaddingLeft();
+
         mTextPaint.setTextSize(Utils.spToDp(getContext(), 15f));
-        canvas.drawText(String.valueOf((int) (mMinY)), 0, (canvasHeight
-                - normalize(canvasHeight, mMinY, mMaxY, mMinY)), mTextPaint);
+        canvas.drawText(String.valueOf((int) (newMinY)), 0, (canvasHeight
+                - normalize(canvasHeight, newMinY, newMaxY, newMinY)), mTextPaint);
         for (int i = 1; i < 9; i++) {
             float yCoord = canvasHeight
-                    - normalize(canvasHeight, mMinY, mMaxY, mMinY + (i * step));
-            canvas.drawLine(getLeft(), yCoord, getWidth(), yCoord, mTextPaint);
-            canvas.drawText(String.valueOf((int) (mMinY + (i * step))), 0, yCoord, mTextPaint);
+                    - normalize(canvasHeight, newMinY, newMaxY, newMinY + (i * step));
+            canvas.drawLine(left, yCoord, left + canvasWidth, yCoord, mTextPaint);
+            canvas.drawText(String.valueOf((int) (newMinY + (i * step))), 0, yCoord, mTextPaint);
         }
 
         List<String> xLables = getXLabels();
@@ -220,10 +235,10 @@ public class GraphView extends View {
         float yCoord = canvasHeight
                 - normalize(canvasHeight, mMinY, mMaxY, mMinY);
         for (int i = 1; i < xLables.size() - 1; i++) {
-            float xCoord = getLeft() + normalize(canvasWidth, mMinX, mMaxX, mMinX + (i * step));
-            canvas.drawLine(xCoord, 0, xCoord, canvasHeight, mTextPaint);
-            if (i != 0 && i % 2 == 0) {
-                canvas.drawText(xLables.get(i - 1), xCoord, yCoord, mTextPaint);
+            float xCoord = normalize(canvasWidth, mMinX, mMaxX, mMinX + (i * step));
+           // canvas.drawLine(xCoord, 0, xCoord, canvasHeight, mTextPaint);
+            if (i != 1 && i % 2 != 0) {
+             //   canvas.drawText(xLables.get(i - 1), xCoord, yCoord, mTextPaint);
             }
         }
     }

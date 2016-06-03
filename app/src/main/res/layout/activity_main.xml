@@ -23,9 +23,10 @@
 
 
     <number26.de.bitcoins.GraphView
+        android:layout_marginTop="10dp"
+        android:padding="40dp"
         android:id="@+id/graph"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbar"
-        android:layout_marginLeft="20dp" />
+        android:layout_below="@id/toolbar"/>
 </RelativeLayout>
