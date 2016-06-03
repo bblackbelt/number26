@@ -4,8 +4,10 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 
 import java.text.SimpleDateFormat;
@@ -37,7 +39,7 @@ public class GraphView extends View {
     private float mMaxY = Integer.MIN_VALUE;
 
     private final SimpleDateFormat mYearSimpleDateFormat = new SimpleDateFormat("MMM yy");
-    private final SimpleDateFormat mDaysSimpleDateFormat = new SimpleDateFormat("d M");
+    private final SimpleDateFormat mDaysSimpleDateFormat = new SimpleDateFormat("d.M");
     private final Calendar mCalendar = Calendar.getInstance();
 
     public GraphView(Context context, AttributeSet attrs) {
@@ -218,43 +220,46 @@ public class GraphView extends View {
         final int canvasHeight = getPaddedHeight();
 
         final int left = getPaddingLeft();
-
+        Rect bounds = new Rect();
         mTextPaint.setTextSize(Utils.spToDp(getContext(), 15f));
-        canvas.drawText(String.valueOf((int) (newMinY)), 0, (canvasHeight
-                - normalize(canvasHeight, newMinY, newMaxY, newMinY)), mTextPaint);
-        for (int i = 1; i < 9; i++) {
+
+        for (int i = 0; i < 8; i++) {
+            final String toDrawn = String.valueOf((int) (newMinY + (i * step)));
+            mTextPaint.getTextBounds(toDrawn, 0, toDrawn.length(), bounds);
             float yCoord = canvasHeight
                     - normalize(canvasHeight, newMinY, newMaxY, newMinY + (i * step));
             canvas.drawLine(left, yCoord, left + canvasWidth, yCoord, mTextPaint);
-            canvas.drawText(String.valueOf((int) (newMinY + (i * step))), 0, yCoord, mTextPaint);
+            canvas.drawText(toDrawn, 0, yCoord + bounds.height() / 2, mTextPaint);
         }
 
 
-        int minAxX = (((int) mMinX / 10) - 1) * 10;
-        int maxAxX = (((int) mMaxX / 10) + 1) * 10;
+        float minAxX = (((int) mMinX / 10) - 1) * 10;
+        float maxAxX = (((int) mMaxX / 10) + 1) * 10;
 
-        List<String> xLables = getXLabels();
-        step = (maxAxX - minAxX) / xLables.size();
+        step = (maxAxX - minAxX) / 12;
+
+        List<Pair<String, Float>> xLabels = getXLabels();
+
         mTextPaint.setTextSize(Utils.spToDp(getContext(), 12f));
         float yCoord = canvasHeight
                 - normalize(canvasHeight, mMinY, mMaxY, mMinY);
-        for (int i = 0; i < xLables.size(); i++) {
-            float xCoord = left +  normalize(canvasWidth, minAxX, maxAxX, minAxX + (i * step));
-            canvas.drawLine(xCoord, 0, xCoord, canvasHeight, mTextPaint);
-           // if (i != 0 && i % 2 == 0) {
-                canvas.drawText(xLables.get(i), xCoord, yCoord, mTextPaint);
-           // }
+
+        for (int i = 1; i < 12; i++) {
+            final String toDrawn = getFormattedXValue((long) (1000L * (minAxX + (step * i))));
+            mTextPaint.getTextBounds(toDrawn, 0, toDrawn.length(), bounds);
+            float xCoord = left + normalize(canvasWidth, minAxX, maxAxX, minAxX + (step * i));
+            canvas.drawText(toDrawn, xCoord - bounds.width(), yCoord + bounds.height(), mTextPaint);
         }
     }
 
-    private List<String> getXLabels() {
-        List<String> list = new ArrayList<>();
+    private List<Pair<String, Float>> getXLabels() {
+        List<Pair<String, Float>> list = new ArrayList<>();
         String currentDate = null;
         for (Point point : mGraphPoints) {
             String date = getFormattedXValue((long) (point.getX() * 1000L));
             if (!date.equals(currentDate)) {
                 currentDate = date;
-                list.add(currentDate);
+                list.add(new Pair<>(currentDate, point.getX()));
             }
         }
         return list;

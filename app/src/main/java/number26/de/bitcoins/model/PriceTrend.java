@@ -17,14 +17,6 @@ public class PriceTrend implements Point {
         mTime = time;
     }
 
-    public long getTime() {
-        return mTime;
-    }
-
-    public float getPrice() {
-        return mPrice;
-    }
-
     @Override
     public float getX() {
         return mTime;
