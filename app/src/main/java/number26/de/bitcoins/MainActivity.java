@@ -19,10 +19,13 @@ import number26.de.bitcoins.model.PriceTrend;
 import number26.de.bitcoins.model.TimeSpan;
 import number26.de.bitcoins.net.RestClient;
 import rx.Observer;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
+
+    private Subscription mSubscription;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,9 +59,13 @@ public class MainActivity extends AppCompatActivity {
             query.put("timespan", timeSpan.getValue());
         }
         query.put("format", "json");
-        RestClient.getInstance().fetchBitCoinsPriceTrend(query)
+        if (mSubscription != null) {
+            mSubscription.unsubscribe();
+        }
+        mSubscription = RestClient.getInstance().fetchBitCoinsPriceTrend(query)
                 .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<List<PriceTrend>>() {
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<PriceTrend>>() {
             @Override
             public void onCompleted() {
             }
@@ -85,5 +92,13 @@ public class MainActivity extends AppCompatActivity {
         timeSpan.add(new TimeSpan(getString(R.string.years, 2), "2year"));
         timeSpan.add(new TimeSpan(getString(R.string.all), "all"));
         return timeSpan;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mSubscription != null) {
+            mSubscription.unsubscribe();
+        }
     }
 }
