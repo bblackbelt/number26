@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 
@@ -90,7 +89,7 @@ public class GraphView extends View {
     }
 
 
-    public void addPoint(final Point point) {
+    public <T extends Point> void addPoint(final T point) {
         synchronized (mGraphPoints) {
             mGraphPoints.add(point);
         }
@@ -102,7 +101,6 @@ public class GraphView extends View {
         synchronized (mGraphPoints) {
             mGraphPoints.addAll(points);
         }
-        Log.e(LOG_TAG, "size " + mGraphPoints.size());
         calculateMinAndMaxX();
         calculateMinAndMaxY();
         invalidate();
@@ -111,9 +109,6 @@ public class GraphView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        int horizontalMargin = 0;
-        int verticalMargin = 0;
 
         int left = getPaddingLeft();
 
