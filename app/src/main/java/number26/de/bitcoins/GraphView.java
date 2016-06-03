@@ -143,7 +143,7 @@ public class GraphView extends View {
         final float axisY = left + normalize(canvasWidth, minAxY, maxAxY, minAxY);
         canvas.drawLine(left, canvasHeight - axisX, left + canvasWidth, canvasHeight - axisX, mAxisPaint);
         canvas.drawLine(axisY, 0, axisY, canvasHeight, mAxisPaint);
-        writeYLabels(canvas);
+        drawLabels(canvas);
     }
 
     private String getFormattedXValue(long milliSecs) {
@@ -204,7 +204,7 @@ public class GraphView extends View {
         return getHeight() - getPaddingTop() - getPaddingBottom();
     }
 
-    private void writeYLabels(Canvas canvas) {
+    private void drawLabels(Canvas canvas) {
         if (mGraphPoints.isEmpty()) {
             return;
         }
@@ -229,17 +229,21 @@ public class GraphView extends View {
             canvas.drawText(String.valueOf((int) (newMinY + (i * step))), 0, yCoord, mTextPaint);
         }
 
+
+        int minAxX = (((int) mMinX / 10) - 1) * 10;
+        int maxAxX = (((int) mMaxX / 10) + 1) * 10;
+
         List<String> xLables = getXLabels();
-        step = (mMaxX - mMinX) / xLables.size();
+        step = (maxAxX - minAxX) / xLables.size();
         mTextPaint.setTextSize(Utils.spToDp(getContext(), 12f));
         float yCoord = canvasHeight
                 - normalize(canvasHeight, mMinY, mMaxY, mMinY);
-        for (int i = 1; i < xLables.size() - 1; i++) {
-            float xCoord = normalize(canvasWidth, mMinX, mMaxX, mMinX + (i * step));
-           // canvas.drawLine(xCoord, 0, xCoord, canvasHeight, mTextPaint);
-            if (i != 1 && i % 2 != 0) {
-             //   canvas.drawText(xLables.get(i - 1), xCoord, yCoord, mTextPaint);
-            }
+        for (int i = 0; i < xLables.size(); i++) {
+            float xCoord = left +  normalize(canvasWidth, minAxX, maxAxX, minAxX + (i * step));
+            canvas.drawLine(xCoord, 0, xCoord, canvasHeight, mTextPaint);
+           // if (i != 0 && i % 2 == 0) {
+                canvas.drawText(xLables.get(i), xCoord, yCoord, mTextPaint);
+           // }
         }
     }
 
